@@ -1,0 +1,6 @@
+{
+    "ssh": "F:\\Program Files\\PuTTY\\putty.exe",
+    "sftp": "C:\\Program Files (x86)\\FileZilla FTP Client\\filezilla.exe",
+    "source":"D:\\Linux",
+    "isEncrypted":false
+}
