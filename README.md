@@ -1,9 +1,16 @@
-# ssh-mgr
-ssh-mgr是一个 管理putty , winscp 或者filezilla的ssh连接的工具
+# ssh连接管理器
+ssh连接管理器（ssh-mgr）是一个管理[putty](https://putty.org/) , [winscp](https://winscp.net/eng/index.php) 或者[filezilla](https://www.filezilla.cn/)的连接信息的工具
 
-## cmdline
+## 优点
 
-### compile & install
+1. 使用[putty](https://putty.org/) 进行ssh登录任一支持ssh的机器
+2. 使用[winscp](https://winscp.net/eng/index.php) 或者[filezilla](https://www.filezilla.cn/)进行上传或下载文件
+3. 使用命令行智能交互界面
+4. 能够管理[putty](https://putty.org/) , [winscp](https://winscp.net/eng/index.php) 或者[filezilla](https://www.filezilla.cn/)的连接信息
+5. 使用[putty](https://putty.org/) , [winscp](https://winscp.net/eng/index.php) 或者[filezilla](https://www.filezilla.cn/)进行免密登录
+6. 使用**国密**加密保存用户名和密码的文件，密匙为登录密码
+
+## 编译和安装
 
 下载代码并编译：
 
@@ -12,14 +19,19 @@ cd cmd/mgr
 go build
 ```
 
-### configure
+或者下载[ssh-mgr的windows64位发布版本](https://github.com/Breeze0806/ssh-mgr/releases/tag/v1.0.0)，注意其最小版本为win7或者win2012
+
+## 使用方式
+
+### 配置
 
 ```json
 {
-    "ssh": "F:\\Program Files\\PuTTY\\putty.exe",
-    "sftp": "C:\\Program Files (x86)\\FileZilla FTP Client\\filezilla.exe",
-    "source":"D:\\Linux",
-    "isEncrypted":false
+    "ssh": "C:\\Program Files\\PuTTY\\putty.exe",
+    "sftp": "C:\\Program Files (x86)\\WinSCP\\WinSCP.exe",
+    "source":"C:\\Linux\\ssh",
+    "isEncrypted":true,
+    "password":"C:\\Linux\\passwd"
 }
 ```
 
@@ -29,7 +41,7 @@ go build
 - isEncrypted 是否加密ssh连接信息的路径
 - password 用于存储密码信息，用于加密登录
 
-### usage
+### 使用方法
 
 ```
 Usage of mgr:
@@ -37,7 +49,7 @@ Usage of mgr:
         config file (default "config.json")
 ```
 
-### start
+### 快速开始
 
 - 在isEncrypted为ture时，开始需要输入密码，如果之前没有输入密码则会输入两次确认密码
 - 使用下面的命令就可以进行ssh连接或者sftp连接，group是将ssh连接分组起的名称，而name是sh连接的别名
@@ -75,3 +87,6 @@ please input ssh user:root
 please input ssh password:*******
 ```
 
+### 注意点
+
+本工具虽然加密相关文件，但是在使用时，windows的任务管理器仍然会泄露shh的用户名和密码，为此在使用时确保只有一人在使用电脑。
