@@ -3,10 +3,11 @@ package cmdline
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/Breeze0806/ssh-mgr/dao"
-	"github.com/howeyc/gopass"
+	"golang.org/x/term"
 )
 
 type CmdServer interface {
@@ -88,7 +89,12 @@ func (e *Executor) Execute(in string) {
 		fmt.Print("please input ssh user:")
 		fmt.Scanln(&conn.User)
 
-		data, err := gopass.GetPasswdPrompt("please input ssh password:", true, os.Stdin, os.Stdout)
+		// Write the password prompt to stderr so the go-prompt renderer
+		// that owns stdout is not disturbed. x/term.ReadPassword handles
+		// echo off/on and terminal state save/restore correctly.
+		fmt.Fprint(os.Stderr, "please input ssh password:")
+		data, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(os.Stderr)
 		if err != nil {
 			fmt.Println("input password fail, error:", err)
 			return
@@ -111,7 +117,20 @@ func (e *Executor) Execute(in string) {
 	}
 }
 
+// Input blocks until the user presses Enter, then returns.
+//
+// On Windows the console window can close as soon as the parent process
+// exits, hiding the last lines of output (notably the "Bye!" printed by
+// the `exit` command). Pausing for a keypress keeps the window open so
+// the user can read whatever just scrolled by.
+//
+// On macOS and Linux the controlling terminal stays open across process
+// exits — the user is dropped straight back into their shell — so the
+// prompt is just dead time. We no-op on those platforms.
 func Input() {
+	if runtime.GOOS != "windows" {
+		return
+	}
 	fmt.Println("press return")
 	input := ""
 	fmt.Scanf("%s", &input)

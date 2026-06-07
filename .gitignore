@@ -3,3 +3,5 @@ cmd/putty/passwd
 cmd/putty/*.exe
 cmd/mgr/passwd
 cmd/mgr/*.exe
+AGENTS.md
+.omo

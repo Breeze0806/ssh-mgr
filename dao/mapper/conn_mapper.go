@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -41,7 +42,15 @@ func (c *ConnSM4CryptoMappar) Read(group, name string) (conn dao.SshConnInfo, er
 	if err != nil {
 		return
 	}
-	conn.User = string(data)
+	// gmsm.Sm4Ecb silently swallows PKCS#7 unpadding errors
+	// (see https://github.com/tjfoc/gmsm sm4.go: `out, _ = pkcs7UnPadding(out)`).
+	// Records written by an older build that used zero-padding therefore
+	// round-trip as "<plaintext>\x00\x00...\x00" (16 bytes). The trailing
+	// nulls are harmless for storage but, once URL-escaped, turn "root"
+	// into "root%00" — which the SSH server rejects with "Access denied".
+	// Strip them here at the read boundary so every consumer (SftpURL,
+	// SshURL, show service) sees clean plaintext.
+	conn.User = string(bytes.TrimRight(data, "\x00"))
 	data, err = hex.DecodeString(conn.Password)
 	if err != nil {
 		return
@@ -50,7 +59,7 @@ func (c *ConnSM4CryptoMappar) Read(group, name string) (conn dao.SshConnInfo, er
 	if err != nil {
 		return
 	}
-	conn.Password = string(data)
+	conn.Password = string(bytes.TrimRight(data, "\x00"))
 	return
 }
 

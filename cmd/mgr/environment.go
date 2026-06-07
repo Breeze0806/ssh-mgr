@@ -14,7 +14,7 @@ import (
 	"github.com/Breeze0806/ssh-mgr/services/show"
 	"github.com/Breeze0806/ssh-mgr/services/ssh"
 	"github.com/c-bata/go-prompt"
-	"github.com/howeyc/gopass"
+	"golang.org/x/term"
 )
 
 type ConnMapper interface {
@@ -82,15 +82,19 @@ func (e *Environment) InitPassword() *Environment {
 }
 
 func (e *Environment) tryPassword() (err error) {
+	// Write prompts to stderr so they don't interfere with go-prompt's
+	// terminal renderer. x/term.ReadPassword disables echo on the terminal
+	// and restores it on return — unlike the unmaintained gopass library
+	// (which uses pkg/term) this is the modern, supported path.
 	var data1 []byte
-	data1, err = gopass.GetPasswdPrompt("please input password:", false, os.Stdin, os.Stdout)
+	data1, err = readPasswordPrompt("please input password:")
 	if err != nil {
-		err = fmt.Errorf("input password fail error: %v", e.err)
+		err = fmt.Errorf("input password fail error: %v", err)
 		return
 	}
 	if !e.passMapper.HasPassword() {
 		var data2 []byte
-		data2, err = gopass.GetPasswdPrompt("please confirm password:", false, os.Stdin, os.Stdout)
+		data2, err = readPasswordPrompt("please confirm password:")
 		if err != nil {
 			err = fmt.Errorf("confirm password fail error: %v", err)
 			return
@@ -109,6 +113,19 @@ func (e *Environment) tryPassword() (err error) {
 	}
 
 	return
+}
+
+// readPasswordPrompt prints `prompt` to stderr (so the go-prompt renderer
+// that owns stdout is not disturbed) and reads a password from stdin
+// without echoing. The terminal is restored to its original state on
+// return, including on error paths, by virtue of term.ReadPassword's
+// internal save/restore of the term state.
+func readPasswordPrompt(prompt string) ([]byte, error) {
+	if _, err := fmt.Fprint(os.Stderr, prompt); err != nil {
+		return nil, err
+	}
+	defer fmt.Fprintln(os.Stderr)
+	return term.ReadPassword(int(os.Stdin.Fd()))
 }
 
 func (e *Environment) InitServices() *Environment {

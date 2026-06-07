@@ -13,7 +13,9 @@ var (
 
 func main() {
 	flag.Parse()
+
 	defer cmdline.Input()
+
 	e, err := NewEnvironment(*configFile)
 	if err != nil {
 		fmt.Println("NewEnvironment fail error:", err)
